@@ -1,8 +1,18 @@
-# Copyright (c) 2020 Tulir Asokan
+# maunium-stickerpicker - A fast and simple Matrix sticker picker widget.
+# Copyright (C) 2020 Tulir Asokan
 #
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Dict, Optional
 from hashlib import sha256
 import mimetypes
@@ -29,7 +39,7 @@ def convert_name(name: str) -> str:
     return "".join(filter(lambda char: char in allowed_chars, name.translate(name_translate)))
 
 
-async def upload_sticker(file: str, directory: str, old_stickers: Dict[str, matrix.StickerInfo]
+async def upload_sticker(file: str, config: dict, directory: str, old_stickers: Dict[str, matrix.StickerInfo]
                          ) -> Optional[matrix.StickerInfo]:
     if file.startswith("."):
         return None
@@ -67,7 +77,7 @@ async def upload_sticker(file: str, directory: str, old_stickers: Dict[str, matr
         }
         print(f".. using existing upload")
     else:
-        image_data, width, height = util.convert_image(image_data)
+        image_data, width, height = util.convert_image(image_data, config["size"])
         print(".", end="", flush=True)
         mxc = await matrix.upload(image_data, "image/png", file)
         print(".", end="", flush=True)
@@ -79,6 +89,8 @@ async def upload_sticker(file: str, directory: str, old_stickers: Dict[str, matr
 
 async def main(args: argparse.Namespace) -> None:
     await matrix.load_config(args.config)
+    with open(args.config) as config_file:
+        config = json.load(config_file)
 
     dirname = os.path.basename(os.path.abspath(args.path))
     meta_path = os.path.join(args.path, "pack.json")
@@ -98,7 +110,7 @@ async def main(args: argparse.Namespace) -> None:
         pack["stickers"] = []
 
     for file in sorted(os.listdir(args.path)):
-        sticker = await upload_sticker(file, args.path, old_stickers=old_stickers)
+        sticker = await upload_sticker(file, config, args.path, old_stickers=old_stickers)
         if sticker:
             pack["stickers"].append(sticker)
 

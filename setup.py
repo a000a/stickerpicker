@@ -1,5 +1,7 @@
 import setuptools
 
+from sticker.get_version import git_tag, git_revision, version, linkified_version
+
 with open("requirements.txt") as reqs:
     install_requires = reqs.read().splitlines()
 
@@ -8,9 +10,18 @@ try:
 except IOError:
     long_desc = "Failed to read README.md"
 
+with open("sticker/version.py", "w") as version_file:
+    version_file.write(f"""# Generated in setup.py
+
+git_tag = {git_tag!r}
+git_revision = {git_revision!r}
+version = {version!r}
+linkified_version = {linkified_version!r}
+""")
+
 setuptools.setup(
     name="maunium-stickerpicker",
-    version="0.1.0",
+    version=version,
     url="https://github.com/maunium/stickerpicker",
 
     author="Tulir Asokan",
@@ -27,7 +38,7 @@ setuptools.setup(
 
     classifiers=[
         "Development Status :: 4 - Beta",
-        "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+        "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Framework :: AsyncIO",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
@@ -36,7 +47,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3.8",
     ],
     entry_points={"console_scripts": [
-        "sticker-import=sticker.import:cmd",
+        "sticker-import=sticker.sticker_import:cmd",
         "sticker-pack=sticker.pack:cmd",
     ]},
 )

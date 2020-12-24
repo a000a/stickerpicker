@@ -1,8 +1,18 @@
-# Copyright (c) 2020 Tulir Asokan
+# maunium-stickerpicker - A fast and simple Matrix sticker picker widget.
+# Copyright (C) 2020 Tulir Asokan
 #
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Dict
 import argparse
 import asyncio
@@ -19,11 +29,11 @@ from telethon.tl.types.messages import StickerSet as StickerSetFull
 from .lib import matrix, util
 
 
-async def reupload_document(client: TelegramClient, document: Document) -> matrix.StickerInfo:
+async def reupload_document(client: TelegramClient, document: Document, config: dict) -> matrix.StickerInfo:
     print(f"Reuploading {document.id}", end="", flush=True)
     data = await client.download_media(document, file=bytes)
     print(".", end="", flush=True)
-    data, width, height = util.convert_image(data)
+    data, width, height = util.convert_image(data, config["size"])
     print(".", end="", flush=True)
     mxc = await matrix.upload(data, "image/png", f"{document.id}.png")
     print(".", flush=True)
@@ -45,7 +55,7 @@ def add_meta(document: Document, info: matrix.StickerInfo, pack: StickerSetFull)
     }
 
 
-async def reupload_pack(client: TelegramClient, pack: StickerSetFull, output_dir: str) -> None:
+async def reupload_pack(client: TelegramClient, pack: StickerSetFull, output_dir: str, config: dict) -> None:
     if pack.set.animated:
         print("Animated stickerpacks are currently not supported")
         return
@@ -75,7 +85,7 @@ async def reupload_pack(client: TelegramClient, pack: StickerSetFull, output_dir
             reuploaded_documents[document.id] = already_uploaded[document.id]
             print(f"Skipped reuploading {document.id}")
         except KeyError:
-            reuploaded_documents[document.id] = await reupload_document(client, document)
+            reuploaded_documents[document.id] = await reupload_document(client, document, config)
         # Always ensure the body and telegram metadata is correct
         add_meta(document, reuploaded_documents[document.id], pack)
 
@@ -122,6 +132,9 @@ parser.add_argument("pack", help="Sticker pack URLs to import", action="append",
 
 async def main(args: argparse.Namespace) -> None:
     await matrix.load_config(args.config)
+    with open(args.config) as config_file:
+        config = json.load(config_file)
+
     client = TelegramClient(args.session, 298751, "cb676d6bae20553c9996996a8f52b4d7")
     await client.start()
 
@@ -143,7 +156,7 @@ async def main(args: argparse.Namespace) -> None:
             input_packs.append(InputStickerSetShortName(short_name=match.group(1)))
         for input_pack in input_packs:
             pack: StickerSetFull = await client(GetStickerSetRequest(input_pack))
-            await reupload_pack(client, pack, args.output_dir)
+            await reupload_pack(client, pack, args.output_dir, config)
     else:
         parser.print_help()
 

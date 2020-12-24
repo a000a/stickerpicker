@@ -1,8 +1,18 @@
-# Copyright (c) 2020 Tulir Asokan
+# maunium-stickerpicker - A fast and simple Matrix sticker picker widget.
+# Copyright (C) 2020 Tulir Asokan
 #
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Optional, TYPE_CHECKING
 import json
 
@@ -50,11 +60,13 @@ async def load_config(path: str) -> None:
         access_token = input("Access token: ")
         whoami_url = URL(homeserver_url) / "_matrix" / "client" / "r0" / "account" / "whoami"
         user_id = await whoami(whoami_url, access_token)
+        size = 256
         with open(path, "w") as config_file:
             json.dump({
                 "homeserver": homeserver_url,
                 "user_id": user_id,
-                "access_token": access_token
+                "access_token": access_token,
+                "size": size
             }, config_file)
         print(f"Wrote config to {path}")
 

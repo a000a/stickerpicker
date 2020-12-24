@@ -1,30 +1,41 @@
-# Copyright (c) 2020 Tulir Asokan
+# maunium-stickerpicker - A fast and simple Matrix sticker picker widget.
+# Copyright (C) 2020 Tulir Asokan
 #
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from io import BytesIO
 import os.path
 import json
+import argparse
 
 from PIL import Image
 
 from . import matrix
 
 
-def convert_image(data: bytes) -> (bytes, int, int):
+def convert_image(data: bytes, size: int) -> (bytes, int, int):
     image: Image.Image = Image.open(BytesIO(data)).convert("RGBA")
     new_file = BytesIO()
     image.save(new_file, "png")
     w, h = image.size
-    if w > 256 or h > 256:
+    if w > size or h > size:
         # Set the width and height to lower values so clients wouldn't show them as huge images
         if w > h:
-            h = int(h / (w / 256))
-            w = 256
+            h = int(h / (w / size))
+            w = size
         else:
-            w = int(w / (h / 256))
-            h = 256
+            w = int(w / (h / size))
+            h = size
     return new_file.getvalue(), w, h
 
 
